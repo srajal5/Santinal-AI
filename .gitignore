@@ -1,0 +1,35 @@
+## Python / backend
+.venv/
+backend/.venv/
+**/__pycache__/
+**/*.pyc
+*.log
+
+## Node / frontend
+frontend/node_modules/
+frontend/dist/
+
+## Large model artifacts and checkpoints
+*.pt
+*.pth
+*.onnx
+
+backend/model/runs/
+backend/model/*.pt
+
+## Local datasets and generated combined dataset
+combined_violence_accident/
+Road Accident.v2i.yolov8/
+Violence Detection.v1i.yolov8/
+Violence.v1i.yolov8/
+
+## Original YOLOv8 project heavy outputs
+Violence-Detection-Using-YOLOv8-Towards-Automated-Video-Surveillance-and-Public-Safety/runs/
+Violence-Detection-Using-YOLOv8-Towards-Automated-Video-Surveillance-and-Public-Safety/*.pt
+Violence-Detection-Using-YOLOv8-Towards-Automated-Video-Surveillance-and-Public-Safety/*.zip
+
+## OS/editor files
+.DS_Store
+Thumbs.db
+*.tmp
+

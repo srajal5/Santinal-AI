@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@theme {
+  --color-accent: #22c55e;
+  --color-accent-muted: #16a34a;
+}
+
+@import "leaflet/dist/leaflet.css";
+
+@import "./styles/global.css";
