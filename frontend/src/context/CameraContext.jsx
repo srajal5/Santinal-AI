@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { fetchCameras, createCamera } from '../api/cameras'
-import { seedDemo } from '../api/demo'
 
 const CameraContext = createContext(null)
 
@@ -21,11 +20,6 @@ export function CameraProvider({ children }) {
     const load = async () => {
       try {
         let data = await fetchCameras()
-        const list = Array.isArray(data) ? data : []
-        if (!cancelled && list.length === 0) {
-          await seedDemo()
-          data = await fetchCameras()
-        }
         if (!cancelled) setCameras(Array.isArray(data) ? data : [])
       } catch {
         if (!cancelled) {

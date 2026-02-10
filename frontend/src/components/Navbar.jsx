@@ -1,14 +1,10 @@
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, useClerkUser } from '../context/AuthContext'
+import { UserButton } from '@clerk/clerk-react'
 
 function Navbar() {
-  const { logout } = useAuth()
+  const { user } = useClerkUser()
   const navigate = useNavigate()
-
-  const handleLogout = () => {
-    logout()
-    navigate('/dashboard')
-  }
 
   return (
     <header className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-6 z-50 navbar">
@@ -32,12 +28,57 @@ function Navbar() {
             <span>Monitoring Active</span>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-sm nav-action focus-ring"
-        >
-          Logout
-        </button>
+        {/* Clerk UserButton for profile and logout */}
+        <div className="flex items-center">
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: {
+                  width: '32px',
+                  height: '32px',
+                },
+                userButtonPopoverCard: {
+                  backgroundColor: '#1f2937',
+                  border: '1px solid #374151',
+                },
+                userButtonPopoverActionButton: {
+                  color: '#e5e7eb',
+                  '&:hover': {
+                    backgroundColor: '#374151',
+                  },
+                },
+                userButtonPopoverActionButtonText: {
+                  color: '#e5e7eb',
+                },
+                userButtonPopoverFooter: {
+                  display: 'none',
+                },
+                userButtonTrigger: {
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                },
+                popoverContent: {
+                  backgroundColor: '#1f2937',
+                },
+                headerTitle: {
+                  color: '#ffffff',
+                },
+                headerSubtitle: {
+                  color: '#9ca3af',
+                },
+                userPreviewMainIdentifier: {
+                  color: '#ffffff',
+                },
+                userPreviewSecondaryIdentifier: {
+                  color: '#9ca3af',
+                },
+              },
+            }}
+            afterSignOutUrl="/login"
+            showName={false}
+          />
+        </div>
       </div>
     </header>
   )

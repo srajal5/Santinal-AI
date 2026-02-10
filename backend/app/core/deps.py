@@ -1,15 +1,18 @@
-"""
-FastAPI dependencies for authentication and authorization.
-"""
 import os
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.core.config import CLERK_IS_ENABLED
 from app.core.security import decode_access_token_or_raise
+from app.core.clerk_auth import (
+    get_current_user_clerk,
+    get_optional_user_clerk,
+    require_roles_clerk,
+)
 from app.models.user import ALLOWED_ROLES
 
-# When True, list endpoints and detect-from-video accept requests without JWT (demo user).
+
 MOCK_NO_DB = os.getenv("SANTINEL_MOCK_NO_DB", "1") == "1"
 
 # Bearer token scheme for Authorization header
@@ -23,51 +26,20 @@ DEMO_USER = {
 }
 
 
-async def get_optional_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
-) -> dict | None:
-    """
-    Extract and validate JWT if present. Returns None if missing or invalid.
-    Does not raise 401; used for optional auth in mock mode.
-    """
-    if not credentials:
-        return None
-    try:
-        payload = decode_access_token_or_raise(credentials.credentials)
-        role = (payload.get("role") or "").lower()
-        if role not in ALLOWED_ROLES:
-            return None
-        payload["role"] = role
-        return payload
-    except Exception:
-        return None
-
-
-async def get_user_or_demo(
-    optional_user: dict | None = Depends(get_optional_user),
-) -> dict:
-    """
-    In MOCK_NO_DB mode: return optional_user if valid, else demo user (no 401).
-    Otherwise: require valid token (raise 401 if missing/invalid).
-    """
-    if MOCK_NO_DB:
-        return optional_user if optional_user else DEMO_USER
-    if optional_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated. Provide a valid Bearer token.",
-        )
-    return optional_user
-
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> dict:
     """
-    Extract and validate JWT from Authorization: Bearer <token>.
-    Raises HTTPException 401 if missing, expired, or invalid.
-    Returns token payload with user_id (sub), role, permissions.
+    Get the current authenticated user.
+    
+    When Clerk is configured (CLERK_SECRET_KEY set), uses Clerk authentication.
+    Otherwise, falls back to legacy JWT or demo mode.
     """
+    if CLERK_IS_ENABLED:
+        return await get_current_user_clerk(credentials)
+    
+    # Legacy: Use original JWT-based authentication
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -85,15 +57,74 @@ async def get_current_user(
     return payload
 
 
+async def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> dict | None:
+    """
+    Extract and validate JWT if present. Returns None if missing or invalid.
+    
+    When Clerk is configured, uses Clerk authentication.
+    Otherwise, falls back to legacy JWT or demo mode.
+    """
+    if CLERK_IS_ENABLED:
+        return await get_optional_user_clerk(credentials)
+    
+    # Legacy: Use original optional user logic
+    if not credentials:
+        return None
+    try:
+        payload = decode_access_token_or_raise(credentials.credentials)
+        role = (payload.get("role") or "").lower()
+        if role not in ALLOWED_ROLES:
+            return None
+        payload["role"] = role
+        return payload
+    except Exception:
+        return None
+
+
+async def get_user_or_demo(
+    optional_user: dict | None = Depends(get_optional_user),
+) -> dict:
+    """
+    Return optional_user if valid, else demo user (no 401).
+    When Clerk is configured, always requires authentication.
+    """
+    if CLERK_IS_ENABLED:
+        if optional_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated. Provide a valid Bearer token.",
+            )
+        return optional_user
+    
+    # Legacy: Return demo user in mock mode
+    if MOCK_NO_DB:
+        return optional_user if optional_user else DEMO_USER
+    if optional_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated. Provide a valid Bearer token.",
+        )
+    return optional_user
+
+
 def require_roles(*allowed_roles: str):
     """
     Dependency factory: protect route to only allow specified roles.
-    Use after get_current_user. Example:
+    
+    When Clerk is configured, uses Clerk-based role checking.
+    Otherwise, uses legacy role checking.
+    
+    Example:
         @router.get("/admin-only", dependencies=[Depends(require_roles("admin"))])
         async def admin_route(user: dict = Depends(get_current_user)):
             ...
     """
-
+    if CLERK_IS_ENABLED:
+        return require_roles_clerk(*allowed_roles)
+    
+    # Legacy: Use original role checker
     async def role_checker(user: dict = Depends(get_current_user)) -> dict:
         user_role = user.get("role", "").lower()
         allowed = {r.lower() for r in allowed_roles}

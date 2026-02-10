@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { fetchIncidents, updateIncidentStatus as apiUpdateStatus } from '../api/incidents'
-import { seedDemo } from '../api/demo'
 
 const IncidentContext = createContext(null)
 
@@ -46,11 +45,6 @@ export function IncidentProvider({ children }) {
     const load = async () => {
       try {
         let data = await fetchIncidents()
-        const list = Array.isArray(data) ? data : []
-        if (!cancelled && list.length === 0) {
-          await seedDemo()
-          data = await fetchIncidents()
-        }
         if (!cancelled) setIncidents(Array.isArray(data) ? data : [])
       } catch {
         if (!cancelled) {

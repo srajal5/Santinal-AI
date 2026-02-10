@@ -5,7 +5,7 @@
   }
 }
 
-/* Theme variables (used by components for colors without hardcoding Tailwind palettes) */
+/* Theme variables */
 :root {
   --surface: #0b0f14;
   --surface-muted: #111827;
@@ -16,7 +16,211 @@
   --badge-bg: rgba(34, 197, 94, 0.12);
 }
 
-/* Critical alert pulse with subtle glow (premium, mission-critical) */
+/* ============================================
+   CLERK COMPONENT DARK THEME FIXES
+   ============================================ */
+
+/* Force all Clerk text to be visible - most aggressive selector */
+.clerk-root,
+.clerk-sign-in-wrapper,
+[id*="clerk"],
+[class*="clerk"] {
+  color: #e5e7eb !important;
+}
+
+/* Clerk UserButton/Profile specific fixes */
+.cl-user-button-popover,
+.cl-user-button-trigger,
+.cl-user-button,
+[class*="userButton"],
+[class*="user-button"] {
+  color: #ffffff !important;
+}
+
+.cl-user-button-popover *,
+.cl-user-button-trigger *,
+[class*="userButton"] *,
+[class*="user-button"] * {
+  color: #ffffff !important;
+}
+
+/* Profile/Identifier text in Clerk */
+.clerk-identify,
+.cl-user-button-identify,
+[class*="identifier"],
+[class*="Identifier"] {
+  color: #ffffff !important;
+}
+
+/* Menu items in user button popover */
+.cl-menu-item,
+.cl-user-button-menu-item,
+[class*="menuItem"],
+[class*="menu-item"] {
+  color: #e5e7eb !important;
+}
+
+/* All Clerk text elements */
+.clerk-root *,
+[id*="clerk"] *,
+[class*="clerk"] * {
+  color: #e5e7eb !important;
+}
+
+/* Specific text elements */
+.clerk-root h1,
+.clerk-root h2,
+.clerk-root h3,
+.clerk-root h4,
+.clerk-root h5,
+.clerk-root h6,
+[id*="clerk"] h1,
+[id*="clerk"] h2,
+[id*="clerk"] h3,
+[id*="clerk"] h4,
+[id*="clerk"] h5,
+[id*="clerk"] h6 {
+  color: #f9fafb !important;
+}
+
+.clerk-root p,
+[id*="clerk"] p {
+  color: #9ca3af !important;
+}
+
+.clerk-root span,
+[id*="clerk"] span {
+  color: #e5e7eb !important;
+}
+
+/* Labels */
+.clerk-root label,
+[id*="clerk"] label {
+  color: #9ca3af !important;
+}
+
+/* Buttons - primary */
+.clerk-root button,
+[id*="clerk"] button,
+.cl-root button,
+.clerk-button,
+button[class*="Button"] {
+  color: #ffffff !important;
+  background-color: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+/* Buttons - secondary */
+.clerk-root button.secondary,
+[id*="clerk"] button.secondary,
+button[class*="secondary"] {
+  color: #e5e7eb !important;
+  background-color: transparent !important;
+  border-color: #374151 !important;
+}
+
+/* Input fields */
+.clerk-root input,
+[id*="clerk"] input,
+input[class*="Input"],
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="tel"],
+.clerk-input {
+  color: #e5e7eb !important;
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* Input placeholders */
+.clerk-root input::placeholder,
+[id*="clerk"] input::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Links */
+.clerk-root a,
+[id*="clerk"] a,
+a[class*="Link"] {
+  color: #16a34a !important;
+}
+
+/* Cards and containers */
+.clerk-root [class*="card"],
+[id*="clerk"] [class*="card"],
+.clerk-card,
+.cl-card {
+  background-color: #111827 !important;
+  border: 1px solid #374151 !important;
+}
+
+/* Form containers */
+.clerk-root [class*="form"],
+[id*="clerk"] [class*="form"],
+.clerk-form {
+  background-color: #111827 !important;
+}
+
+/* Divider */
+.clerk-root [class*="divider"],
+[id*="clerk"] [class*="divider"] {
+  background-color: #374151 !important;
+}
+
+/* OTP/Verification inputs */
+.clerk-root [class*="otp"],
+[id*="clerk"] [class*="otp"],
+.clerk-otp {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+/* Profile/Avatar sections */
+.clerk-root [class*="profile"],
+[id*="clerk"] [class*="profile"],
+.clerk-profile,
+.clerk-user-button {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+/* Notification/Alerts */
+.clerk-root [class*="notification"],
+[id*="clerk"] [class*="notification"],
+.clerk-alert {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+/* Footer */
+.clerk-root [class*="footer"],
+[id*="clerk"] [class*="footer"] {
+  background-color: #111827 !important;
+}
+
+/* Scrollbar for Clerk components */
+.clerk-root::-webkit-scrollbar,
+[id*="clerk"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.clerk-root::-webkit-scrollbar-track,
+[id*="clerk"]::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.clerk-root::-webkit-scrollbar-thumb,
+[id*="clerk"]::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
+}
+
+/* ============================================
+   Original styles preserved
+   ============================================ */
+
 .pulse-critical {
   animation: criticalPulse 1.5s ease-in-out infinite;
 }
@@ -26,7 +230,6 @@
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.0); }
 }
 
-/* Map marker styles */
 .marker-incident {
   background-color: rgba(239,68,68,0.9);
   border: 2px solid rgba(239,68,68,0.4);
@@ -61,52 +264,19 @@
   border-bottom: 1px solid var(--border);
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
 }
-.brand {
-  color: var(--text);
-}
-.brand-sub {
-  color: var(--text-muted);
-  font-size: 12px;
-  letter-spacing: 0.2px;
-}
-.nav-action {
-  color: var(--text-muted);
-}
-.nav-action:hover {
-  color: var(--text);
-}
-.status {
-  color: var(--text-muted);
-}
+.brand { color: var(--text); }
+.brand-sub { color: var(--text-muted); font-size: 12px; letter-spacing: 0.2px; }
+.nav-action { color: var(--text-muted); }
+.nav-action:hover { color: var(--text); }
+.status { color: var(--text-muted); }
 .status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
+  width: 8px; height: 8px; border-radius: 9999px;
   background-color: var(--badge-bg);
   box-shadow: 0 0 0 3px var(--badge-bg);
 }
-.sidebar-surface {
-  background-color: var(--surface-muted);
-  border-right: 1px solid var(--border);
-}
-.nav-item {
-  color: var(--text-muted);
-  background-color: transparent;
-  border: 1px solid transparent;
-}
-.nav-item:hover {
-  background-color: var(--surface);
-  color: var(--text);
-}
-.nav-item--active {
-  background-color: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
-}
-.nav-bullet {
-  color: var(--dot-muted);
-}
-.focus-ring:focus-visible {
-  outline: 2px solid var(--border);
-  outline-offset: 2px;
-}
+.sidebar-surface { background-color: var(--surface-muted); border-right: 1px solid var(--border); }
+.nav-item { color: var(--text-muted); background-color: transparent; border: 1px solid transparent; }
+.nav-item:hover { background-color: var(--surface); color: var(--text); }
+.nav-item--active { background-color: var(--surface); color: var(--text); border-color: var(--border); }
+.nav-bullet { color: var(--dot-muted); }
+.focus-ring:focus-visible { outline: 2px solid var(--border); outline-offset: 2px; }

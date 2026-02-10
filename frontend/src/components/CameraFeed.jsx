@@ -16,6 +16,7 @@ function LocalWebcamFeed() {
   const [alertShown, setAlertShown] = useState(false)
   const detectionIntervalRef = useRef(null)
   const alertTimeoutRef = useRef(null)
+  const lastIncidentTimeRef = useRef(0)
   const { activeCamera } = useCamera()
   const { setIncidents } = useIncident()
   const { refresh: refreshAlerts } = useAlert()
@@ -80,7 +81,9 @@ function LocalWebcamFeed() {
         drawDetections(result.detections, video.videoWidth, video.videoHeight)
         
         // Show alert if violence or accident detected
-        if ((result.has_violence || result.has_accident) && !alertShown) {
+        const now = Date.now()
+        if ((result.has_violence || result.has_accident) && (now - lastIncidentTimeRef.current > 15000)) { // 15s cooldown
+          lastIncidentTimeRef.current = now
           setAlertShown(true)
           setDetectionStatus('⚠️ INCIDENT DETECTED!')
           
@@ -287,6 +290,7 @@ function IPCamFeed() {
   const canvasRef = useRef(null)
   const detectionIntervalRef = useRef(null)
   const alertTimeoutRef = useRef(null)
+  const lastIncidentTimeRef = useRef(0)
   const { activeCamera } = useCamera()
   const { setIncidents } = useIncident()
   const { refresh: refreshAlerts } = useAlert()
@@ -349,7 +353,9 @@ function IPCamFeed() {
         drawDetections(result.detections, img.naturalWidth, img.naturalHeight)
         
         // Show alert if violence or accident detected
-        if ((result.has_violence || result.has_accident) && !alertShown) {
+        const now = Date.now()
+        if ((result.has_violence || result.has_accident) && (now - lastIncidentTimeRef.current > 15000)) { // 15s cooldown
+          lastIncidentTimeRef.current = now
           setAlertShown(true)
           setDetectionStatus('⚠️ INCIDENT DETECTED!')
           
@@ -702,6 +708,7 @@ function ApiCameraFeed({ camera }) {
   const canvasRef = useRef(null)
   const detectionIntervalRef = useRef(null)
   const alertTimeoutRef = useRef(null)
+  const lastIncidentTimeRef = useRef(0)
   const { setIncidents } = useIncident()
   const { refresh: refreshAlerts } = useAlert()
 
@@ -777,7 +784,9 @@ function ApiCameraFeed({ camera }) {
         drawDetections(result.detections, width, height)
         
         // Show alert if violence or accident detected
-        if ((result.has_violence || result.has_accident) && !alertShown) {
+        const now = Date.now()
+        if ((result.has_violence || result.has_accident) && (now - lastIncidentTimeRef.current > 15000)) { // 15s cooldown
+          lastIncidentTimeRef.current = now
           setAlertShown(true)
           setDetectionStatus('⚠️ INCIDENT DETECTED!')
           

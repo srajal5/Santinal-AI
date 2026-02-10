@@ -86,7 +86,6 @@ function AlertPanel() {
   const { alerts, loading, error } = useAlert()
   const navigate = useNavigate()
   const { cameras, setActiveCamera } = useCamera()
-  const [demoAlerts, setDemoAlerts] = useState([])
 
   const handleSendHelp = (alert) => {
     const incidentId = alert.incident_id ?? alert.alert_id ?? ''
@@ -126,18 +125,7 @@ function AlertPanel() {
 
   const severityOrder = ['critical', 'high', 'medium', 'low']
 
-  useEffect(() => {
-    if (!loading && !error && activeAlerts.length === 0) {
-      // DEMO: Inject realistic alerts when backend returns none
-      setDemoAlerts([
-        { alert_id: 'demo-a1', type: 'Fire', severity: 'critical', status: 'new', camera_name: 'Warehouse Cam 2', created_at: new Date(Date.now() - 90_000).toISOString(), isDemo: true },
-        { alert_id: 'demo-a2', type: 'Accident', severity: 'high', status: 'new', camera_name: 'Intersection CCTV #3', created_at: new Date(Date.now() - 180_000).toISOString(), isDemo: true },
-        { alert_id: 'demo-a3', type: 'Crowd', severity: 'medium', status: 'new', camera_name: 'Stadium Entry', created_at: new Date(Date.now() - 300_000).toISOString(), isDemo: true },
-      ])
-    } else {
-      setDemoAlerts([])
-    }
-  }, [loading, error, activeAlerts.length])
+
 
   return (
     <aside className="fixed right-0 top-14 bottom-0 w-[300px] bg-gray-900 border-l border-gray-800 z-40 flex flex-col">
@@ -151,11 +139,11 @@ function AlertPanel() {
         {error && activeAlerts.length === 0 && (
           <p className="text-sm text-amber-500">Unable to load alerts</p>
         )}
-        {!loading && !error && activeAlerts.length === 0 && demoAlerts.length === 0 && (
+        {!loading && !error && activeAlerts.length === 0 && (
           <p className="text-sm text-gray-500">AI monitoring active, no threats detected</p>
         )}
         {severityOrder.map((sev) =>
-          ((bySeverity[sev] || []).length ? bySeverity[sev] : demoAlerts.filter((a) => (a.severity || '').toLowerCase() === sev)).map((alert) => (
+          (bySeverity[sev] || []).map((alert) => (
             <div
               key={alert.alert_id}
               className={sev === 'critical' ? 'animate-pulse' : ''}

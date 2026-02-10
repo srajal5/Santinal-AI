@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { fetchAlerts, acknowledgeAlert as apiAcknowledge } from '../api/alerts'
-import { seedDemo } from '../api/demo'
 
 const AlertContext = createContext(null)
 
@@ -22,20 +21,25 @@ function playAlarmSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
     const gain = ctx.createGain()
-    gain.gain.value = 0.3
+    gain.gain.value = 0.5 // Slightly louder
     gain.connect(ctx.destination)
+    
     const play = (freq, start, duration) => {
       const osc = ctx.createOscillator()
+      osc.type = 'square' // Harsher tone for an alarm
       osc.frequency.value = freq
       osc.connect(gain)
-      osc.start(start)
-      osc.stop(start + duration)
+      osc.start(ctx.currentTime + start)
+      osc.stop(ctx.currentTime + start + duration)
     }
-    play(880, 0, 0.15)
-    play(880, 0.2, 0.15)
-    play(880, 0.4, 0.3)
-  } catch {
-    // Web Audio not supported - no sound fallback
+    
+    // Play an alternating high-low siren 5 times
+    for (let i = 0; i < 5; i++) {
+      play(800, i * 0.6, 0.3)
+      play(600, i * 0.6 + 0.3, 0.3)
+    }
+  } catch (err) {
+    console.warn("Could not play alarm sound:", err)
   }
 }
 
@@ -49,11 +53,6 @@ export function AlertProvider({ children }) {
   const load = useCallback(async () => {
     try {
       let data = await fetchAlerts()
-      const list = sortAlerts(Array.isArray(data) ? data : [])
-      if (list.length === 0) {
-        await seedDemo()
-        data = await fetchAlerts()
-      }
       const sorted = sortAlerts(Array.isArray(data) ? data : [])
       const seen = seenAlertIdsRef.current
       const newCriticalOrHigh = sorted.filter((a) => {

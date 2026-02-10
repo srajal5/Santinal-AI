@@ -28,6 +28,13 @@ os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 ROOT_DIR = Path(__file__).resolve().parents[2]  # .../backend
 MODEL_DIR = ROOT_DIR / "model"
+
+# ---------------------------------------------------------
+# CUSTOM YOLO MODEL PATH:
+# When you finish training your own YOLO model to detect
+# real incidents, replace the `.pt` file below or change 
+# this path to point to your new "best.pt" weights!
+# ---------------------------------------------------------
 BEST_WEIGHTS = MODEL_DIR / "runs" / "detect" / "train_combined" / "weights" / "best.pt"
 
 _model: YOLO | None = None
