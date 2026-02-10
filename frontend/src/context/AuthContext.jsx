@@ -1,70 +1,92 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react'
-import api from '../api/axios'
+/**
+ * Auth Context that wraps Clerk authentication
+ * Provides the same interface as the original AuthContext for backward compatibility
+ */
+import { createContext, useContext, useState, useEffect } from 'react'
+import { 
+  ClerkProvider, 
+  useAuth as useClerkAuth, 
+  useUser,
+} from '@clerk/clerk-react'
+import { CLERK_PUBLISHABLE_KEY } from '../config/clerk'
+import { setClerkTokenGetter } from '../api/axios'
 
 const AuthContext = createContext(null)
 
-const TOKEN_KEY = 'sentinel_token'
-const USER_KEY = 'sentinel_user'
-const DEMO_EMAIL = 'admin@sentinel.com'
-const DEMO_PASSWORD = 'admin123'
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const { isLoaded, userId, getToken } = useClerkAuth()
+  const { user } = useUser()
   const [token, setToken] = useState(null)
   const [authReady, setAuthReady] = useState(false)
-  const autoLoginAttempted = useRef(false)
+
+  // Register the token getter with axios when getToken is available
+  useEffect(() => {
+    if (getToken) {
+      setClerkTokenGetter(getToken)
+    }
+  }, [getToken])
 
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY)
-    const storedUser = localStorage.getItem(USER_KEY)
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    if (isLoaded && userId) {
+      // Get the Clerk token
+      getToken().then((clerkToken) => {
+        setToken(clerkToken)
+        // Also store in localStorage as backup
+        if (clerkToken) {
+          localStorage.setItem('clerk_token', clerkToken)
+        }
+        setAuthReady(true)
+      }).catch(() => {
+        setAuthReady(true)
+      })
+    } else if (isLoaded && !userId) {
+      setToken(null)
+      localStorage.removeItem('clerk_token')
       setAuthReady(true)
-      return
     }
-    if (autoLoginAttempted.current) return
-    autoLoginAttempted.current = true
-    api
-      .post('/auth/login', { email: DEMO_EMAIL, password: DEMO_PASSWORD })
-      .then(({ data }) => {
-        const accessToken = data.access_token
-        localStorage.setItem(TOKEN_KEY, accessToken)
-        return api.get('/auth/me').then(({ data: userData }) => ({
-          email: userData.email,
-          role: userData.role,
-        }))
-      })
-      .then((userObj) => {
-        setToken(localStorage.getItem(TOKEN_KEY))
-        setUser(userObj)
-        localStorage.setItem(USER_KEY, JSON.stringify(userObj))
-      })
-      .catch(() => {})
-      .finally(() => setAuthReady(true))
-  }, [])
+  }, [isLoaded, userId, getToken])
 
-  const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password })
-    const accessToken = data.access_token
-    localStorage.setItem(TOKEN_KEY, accessToken)
-    const { data: userData } = await api.get('/auth/me')
-    const userObj = { email: userData.email, role: userData.role }
-    setToken(accessToken)
-    setUser(userObj)
-    localStorage.setItem(USER_KEY, JSON.stringify(userObj))
-  }
-
-  const logout = () => {
+  const logout = async () => {
+    // Clerk handles logout via SignIn component or clerk.signOut()
+    // This is handled by the SignedOut component automatically
     setToken(null)
-    setUser(null)
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
+    localStorage.removeItem('clerk_token')
   }
 
-  const value = { user, token, login, logout, authReady }
+  // Extract user info from Clerk user
+  const userInfo = user ? {
+    email: user.primaryEmailAddress?.emailAddress || '',
+    role: 'admin', // Default role - can be extended with custom metadata
+    name: user.fullName || user.firstName || '',
+    id: user.id,
+  } : null
+
+  const value = {
+    user: userInfo,
+    token,
+    logout,
+    authReady: isLoaded,
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+// Wrapper component that provides the ClerkProvider
+export function ClerkAuthProvider({ children }) {
+  return (
+    <ClerkProvider 
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        variables: {
+          colorPrimary: '#16a34a',
+          colorTextOnPrimaryBackground: '#ffffff',
+          colorBackground: '#111827',
+        },
+      }}
+    >
+      {children}
+    </ClerkProvider>
+  )
 }
 
 export function useAuth() {
@@ -74,3 +96,6 @@ export function useAuth() {
   }
   return context
 }
+
+// Re-export Clerk's useUser hook for components that need direct Clerk user access
+export { useUser as useClerkUser }

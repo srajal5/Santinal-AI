@@ -2,6 +2,7 @@
 Demo seed: realistic sample data for cameras, incidents, alerts, directory.
 Runs on startup if collections are empty. Also exposed as POST /demo/seed.
 """
+import os
 from datetime import datetime, timezone
 
 from app.db.mongodb import get_database
@@ -89,6 +90,9 @@ async def _seed_directory() -> int:
 
 async def seed_demo_data() -> dict:
     """Seed demo data if collections are empty. Returns counts added."""
+    if os.getenv("SANTINEL_MOCK_NO_DB", "1") == "1":
+        # No-DB mode: in-memory data is used; skip MongoDB. Frontend can still call this.
+        return {"cameras": 0, "incidents": 0, "directory": 0}
     cameras = await _seed_cameras()
     incidents = await _seed_incidents_and_alerts()
     directory = await _seed_directory()

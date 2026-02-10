@@ -1,5 +1,36 @@
 @import "tailwindcss";
 
+/* Clerk CSS Variables for Dark Theme - must be at root level */
+:root {
+  /* Primary brand color */
+  --clerk-color-primary: #16a34a;
+  
+  --clerk-color-primary-hover: #15803d;
+  --clerk-color-text-on-primary-background: #ffffff;
+  
+  /* Background colors */
+  --clerk-color-background: #111827;
+  --clerk-color-background-hover: #1f2937;
+  --clerk-color-input-background: #1f2937;
+  
+  /* Text colors */
+  --clerk-color-text: #f9fafb;
+  --clerk-color-text-secondary: #9ca3af;
+  --clerk-color-text-on-background: #f9fafb;
+  --clerk-color-input-text: #e5e7eb;
+  
+  /* Border colors */
+  --clerk-color-input-border: #374151;
+  --clerk-color-input-border-hover: #4b5563;
+  --clerk-color-border: #374151;
+  
+  /* Danger/Error */
+  --clerk-color-danger: #ef4444;
+  
+  /* Success */
+  --clerk-color-success: #22c55e;
+}
+
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.85; }

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.core.deps import require_roles
+from app.core.deps import get_user_or_demo, require_roles
 from app.schemas.alert import AlertResponse
 from app.services import alert_service
 
@@ -9,7 +9,7 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 
 @router.get("", response_model=list[AlertResponse])
 async def list_alerts(
-    user: dict = Depends(require_roles("admin", "police")),
+    user: dict = Depends(get_user_or_demo),
 ):
     return await alert_service.get_all_alerts()
 
