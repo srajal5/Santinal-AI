@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from fastapi import APIRouter, Depends, HTTPException, File, Form, UploadFile
 
-from app.core.deps import get_current_user, require_roles
+from app.core.deps import get_current_user, get_user_or_demo, require_roles
 from app.core import yolo_inference
 from app.models.incident import IncidentSeverity, IncidentStatus, IncidentType
 from app.schemas.incident import IncidentCreate, IncidentResponse, IncidentStatusUpdate
@@ -50,7 +50,10 @@ async def report_incident(
     body: IncidentCreate,
     user: dict = Depends(get_current_user),
 ):
-    """Report a new incident. Requires JWT. Defaults status to open."""
+    """
+    Report a new incident. Requires JWT. Defaults status to open.
+    Manual reports do NOT create alerts - only detection-based incidents create alerts.
+    """
     reported_by = user.get("email") or user.get("role") or user.get("sub", "")
     return await incident_service.create_incident(
         type=body.type,
@@ -58,6 +61,7 @@ async def report_incident(
         longitude=body.longitude,
         severity=body.severity,
         reported_by=reported_by,
+        create_alert_flag=False,  # Manual reports don't create alerts
     )
 
 
@@ -65,7 +69,7 @@ async def report_incident(
 async def detect_incidents_from_video(
     file: UploadFile = File(...),
     camera_id: str = Form(...),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_user_or_demo),
 ):
     """
     Run YOLOv8 on an uploaded video and create incidents + alerts.
@@ -161,12 +165,18 @@ async def detect_frame(request: FrameDetectionRequest):
     """
     Run YOLOv8 detection on a single frame.
     
-    Accepts base64-encoded image and returns detection results.
-    Designed for real-time webcam detection.
+    Accepts base64-encoded image (data URL or pure base64) and returns detection results.
+    Designed for real-time webcam and IP camera detection.
     """
     try:
+        # Handle data URL format (data:image/jpeg;base64,...) or pure base64
+        frame_data = request.frame_data
+        if frame_data.startswith('data:'):
+            # Extract base64 part from data URL
+            frame_data = frame_data.split(',')[1]
+        
         # Decode base64 image
-        image_bytes = base64.b64decode(request.frame_data)
+        image_bytes = base64.b64decode(frame_data)
         image = Image.open(BytesIO(image_bytes))
         
         # Convert to numpy array (RGB format for PIL)
@@ -189,11 +199,68 @@ async def detect_frame(request: FrameDetectionRequest):
         raise HTTPException(status_code=500, detail=f"Frame detection failed: {str(e)}")
 
 
+class RealtimeDetectionRequest(BaseModel):
+    """Request model for creating incident from real-time detection."""
+    type: str  # "violence" or "accident"
+    confidence: float
+    latitude: float = 0.0
+    longitude: float = 0.0
+    camera_id: str | None = None
+
+
+@router.post("/create-from-detection", response_model=IncidentResponse)
+async def create_incident_from_detection(
+    request: RealtimeDetectionRequest,
+    user: dict = Depends(get_user_or_demo),
+):
+    """
+    Create an incident and alert from a real-time detection.
+    Only creates alerts when actual detections occur (not manual reports).
+    """
+    reported_by = user.get("email") or user.get("role") or user.get("sub", "")
+    
+    # Map detection type to incident type
+    if request.type == "violence":
+        incident_type = IncidentType.CRIME
+        # Determine severity based on confidence
+        severity = IncidentSeverity.HIGH if request.confidence >= 0.7 else IncidentSeverity.MEDIUM
+    elif request.type == "accident":
+        incident_type = IncidentType.ACCIDENT
+        # Determine severity based on confidence
+        severity = IncidentSeverity.CRITICAL if request.confidence >= 0.7 else IncidentSeverity.HIGH
+    else:
+        raise HTTPException(status_code=400, detail=f"Invalid detection type: {request.type}")
+    
+    # Try to get camera location if camera_id provided
+    latitude = request.latitude
+    longitude = request.longitude
+    if request.camera_id:
+        try:
+            camera = await camera_service.get_camera_by_id(request.camera_id)
+            if camera:
+                latitude = camera.get("latitude", latitude)
+                longitude = camera.get("longitude", longitude)
+        except Exception as e:
+            logger.warning(f"Could not fetch camera {request.camera_id}: {e}")
+    
+    # Create incident with alert flag set to True (from detection)
+    incident = await incident_service.create_incident(
+        type=incident_type,
+        latitude=latitude,
+        longitude=longitude,
+        severity=severity,
+        reported_by=reported_by,
+        create_alert_flag=True,  # Create alert for detection-based incidents
+    )
+    
+    return incident
+
+
 @router.get("/all", response_model=list[IncidentResponse])
 async def get_all_incidents(
-    user: dict = Depends(require_roles("admin", "police")),
+    user: dict = Depends(get_user_or_demo),
 ):
-    """Fetch all incidents. Admin and police only."""
+    """Fetch all incidents. In mock mode works without JWT; otherwise requires valid token."""
     return await incident_service.get_all_incidents()
 
 

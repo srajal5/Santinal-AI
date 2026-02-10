@@ -4,7 +4,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
-from app.core.deps import require_roles
+from app.core.deps import get_user_or_demo, require_roles
 from app.schemas.camera import CameraCreate, CameraResponse, CameraStatusUpdate
 from app.services import camera_service
 
@@ -84,7 +84,7 @@ async def create_camera(
 
 @router.get("", response_model=list[CameraResponse])
 async def list_cameras(
-    user: dict = Depends(require_roles("admin", "police")),
+    user: dict = Depends(get_user_or_demo),
 ):
     return await camera_service.get_all_cameras()
 

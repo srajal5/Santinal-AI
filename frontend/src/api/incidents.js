@@ -32,3 +32,15 @@ export async function detectFrameFromWebcam(frameData, confidence = 0.5) {
 
   return data
 }
+
+export async function createIncidentFromDetection({ type, confidence, latitude = 0, longitude = 0, cameraId = null }) {
+  const { data } = await api.post('/incidents/create-from-detection', {
+    type,
+    confidence,
+    latitude,
+    longitude,
+    camera_id: cameraId,
+  })
+
+  return data
+}

@@ -46,8 +46,16 @@ async def create_incident(
     longitude: float,
     severity: IncidentSeverity,
     reported_by: str,
+    create_alert_flag: bool = False,
 ) -> dict:
-    """Create and store a new incident. Defaults status to open."""
+    """
+    Create and store a new incident. Defaults status to open.
+    
+    Args:
+        create_alert_flag: If True, create an alert for this incident.
+                           Only set to True when incident is created from actual detection.
+                           Manual reports should not create alerts.
+    """
     now = datetime.now(timezone.utc)
 
     if MOCK_NO_DB:
@@ -63,11 +71,13 @@ async def create_incident(
             "reported_by": reported_by,
         }
         _INCIDENTS.append(doc)
-        await alert_service.create_alert(
-            incident_id=incident_id,
-            type=type.value,
-            severity=severity.value,
-        )
+        # Only create alert if this is from actual detection
+        if create_alert_flag:
+            await alert_service.create_alert(
+                incident_id=incident_id,
+                type=type.value,
+                severity=severity.value,
+            )
         return _doc_to_response(doc)
 
     db = get_database()
@@ -83,11 +93,13 @@ async def create_incident(
     result = await db[COLLECTION].insert_one(doc)
     doc["_id"] = result.inserted_id
     incident_id = str(result.inserted_id)
-    await alert_service.create_alert(
-        incident_id=incident_id,
-        type=type.value,
-        severity=severity.value,
-    )
+    # Only create alert if this is from actual detection
+    if create_alert_flag:
+        await alert_service.create_alert(
+            incident_id=incident_id,
+            type=type.value,
+            severity=severity.value,
+        )
     return _doc_to_response(doc)
 
 
@@ -125,6 +137,7 @@ async def create_incidents_from_detections(
                 longitude=longitude,
                 severity=severity,
                 reported_by=reported_by,
+                create_alert_flag=True,  # Create alert for detection-based incidents
             )
         )
 
@@ -141,6 +154,7 @@ async def create_incidents_from_detections(
                 longitude=longitude,
                 severity=severity,
                 reported_by=reported_by,
+                create_alert_flag=True,  # Create alert for detection-based incidents
             )
         )
 
