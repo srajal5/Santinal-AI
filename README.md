@@ -147,3 +147,4 @@ Open `http://localhost:3000` and log in with **admin@sentinel.com** / **admin123
 ## License
 
 Private / Proprietary
+Follow for more intresting projects
